@@ -1,0 +1,5 @@
+Flask
+pytest
+selenium
+webdriver-manager
+pytest-cov
