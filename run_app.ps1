@@ -14,10 +14,12 @@ if (-not (Test-Path $venvPython)) {
   exit 1
 }
 
-# Start app and redirect stdout/stderr to logs\app.log
-$p = Start-Process -FilePath $venvPython -ArgumentList "app.py" -PassThru -WindowStyle Hidden -RedirectStandardOutput "logs\app.log" -RedirectStandardError "logs\app.log"
+# Start app and redirect stdout and stderr to separate files (PowerShell requires different targets)
+$stdout = "logs\app_stdout.log"
+$stderr = "logs\app_stderr.log"
+$p = Start-Process -FilePath $venvPython -ArgumentList "app.py" -PassThru -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr
 
-# Write PID
+# Write PID (use a file so cleanup can find it)
 $p.Id | Out-File -FilePath app.pid -Encoding ascii
 
 # Wait for health endpoint
@@ -35,6 +37,9 @@ while ($i -lt $timeout) {
 }
 if ($i -ge $timeout) {
   Write-Host "App failed to start within timeout. Dumping logs:"
-  Get-Content "logs\app.log" -ErrorAction SilentlyContinue
+  Write-Host "----- STDOUT -----"
+  Get-Content $stdout -ErrorAction SilentlyContinue
+  Write-Host "----- STDERR -----"
+  Get-Content $stderr -ErrorAction SilentlyContinue
   exit 1
 }
